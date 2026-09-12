@@ -1,0 +1,6 @@
+{
+  "name": "Finora",
+  "description": "Sistem Keuangan UMKM Modern untuk pencatatan transaksi, analitik arus kas, dan laporan bisnis otomatis.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
