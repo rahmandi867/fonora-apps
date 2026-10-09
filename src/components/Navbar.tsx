@@ -10,9 +10,16 @@ import {
   CheckCircle2,
   AlertTriangle,
   FileSpreadsheet,
-  FileText
+  FileText,
+  Palette,
+  Check,
+  ChevronDown,
+  Sparkles,
+  LogOut,
+  Users
 } from 'lucide-react';
 import { ActiveTab, PeriodFilter } from '../types';
+import { MontessoriTheme, MontessoriThemeId, MONTESSORI_THEMES } from '../themes/montessoriThemes';
 
 interface NavbarProps {
   activeTab: ActiveTab;
@@ -26,6 +33,15 @@ interface NavbarProps {
   onOpenAddModal: () => void;
   onExportExcel: () => void;
   onExportWord: () => void;
+  theme?: MontessoriTheme;
+  activeThemeId: MontessoriThemeId;
+  onSelectTheme: (id: MontessoriThemeId) => void;
+  onOpenThemeModal: () => void;
+  onLogout?: () => void;
+  onOpenMonthlyClosingModal?: () => void;
+  onOpenAdminResetModal?: () => void;
+  onOpenUserManagementModal?: () => void;
+  pendingRequestsCount?: number;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -40,9 +56,21 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenAddModal,
   onExportExcel,
   onExportWord,
+  theme,
+  activeThemeId,
+  onSelectTheme,
+  onOpenThemeModal,
+  onLogout,
+  onOpenMonthlyClosingModal,
+  onOpenAdminResetModal,
+  onOpenUserManagementModal,
+  pendingRequestsCount = 0,
 }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [showThemeQuickMenu, setShowThemeQuickMenu] = useState(false);
+
+  const primaryColor = theme?.colors.primary || '#059669';
 
   const getTabTitle = (tab: ActiveTab) => {
     switch (tab) {
@@ -52,6 +80,8 @@ export const Navbar: React.FC<NavbarProps> = ({
         return 'Buku Catatan Transaksi';
       case 'laporan':
         return 'Laporan Keuangan & Rasio';
+      case 'rekap_tahunan':
+        return 'Laporan & Rekapitulasi Tahunan (12 Bulan)';
       case 'produk':
         return 'Produk & Penjualan Terlaris';
       case 'insight':
@@ -68,10 +98,12 @@ export const Navbar: React.FC<NavbarProps> = ({
     tahun_ini: 'Tahun 2026',
   };
 
+  const themesList = Object.values(MONTESSORI_THEMES);
+
   return (
     <header
       id="main-navbar"
-      className="sticky top-0 z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 sm:px-6 py-3 transition-colors duration-200"
+      className="sticky top-0 z-30 bg-[#FCFAF6]/90 dark:bg-[#141A21]/90 backdrop-blur-md border-b border-[#EAE4D8] dark:border-[#242D38] px-4 sm:px-6 py-3 transition-colors duration-200"
     >
       <div className="flex items-center justify-between gap-3">
         {/* Left Section: Mobile Menu & Breadcrumbs */}
@@ -79,7 +111,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             id="open-sidebar-mobile-btn"
             onClick={onOpenMobileSidebar}
-            className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 lg:hidden focus:outline-none"
+            className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-[#F2ECE2] dark:hover:bg-slate-800 lg:hidden focus:outline-none"
             aria-label="Buka Menu Sidebar"
           >
             <Menu className="w-5 h-5" />
@@ -89,7 +121,10 @@ export const Navbar: React.FC<NavbarProps> = ({
             <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
               <span>Finora</span>
               <span>/</span>
-              <span className="capitalize text-emerald-600 dark:text-emerald-400 font-medium">
+              <span
+                className="capitalize font-semibold"
+                style={{ color: primaryColor }}
+              >
                 {activeTab}
               </span>
             </div>
@@ -109,7 +144,10 @@ export const Navbar: React.FC<NavbarProps> = ({
               placeholder="Cari transaksi, produk, nota, vendor..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-1.5 text-xs sm:text-sm bg-slate-100 dark:bg-slate-800/80 text-slate-800 dark:text-slate-200 placeholder-slate-400 rounded-xl border border-transparent focus:border-emerald-500 focus:bg-white dark:focus:bg-slate-900 focus:outline-none transition-all"
+              className="w-full pl-9 pr-4 py-1.5 text-xs sm:text-sm bg-[#F4EFE6] dark:bg-slate-800/80 text-slate-800 dark:text-slate-200 placeholder-slate-400 rounded-xl border border-transparent focus:bg-white dark:focus:bg-slate-900 focus:outline-none transition-all"
+              style={{
+                borderColor: searchTerm ? primaryColor : undefined,
+              }}
             />
             {searchTerm && (
               <button
@@ -124,10 +162,117 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Right Section: Actions & Controls */}
         <div className="flex items-center gap-2">
+          {/* Quick Montessori 3-Theme Selector Pill */}
+          <div className="relative">
+            <button
+              id="theme-switcher-btn"
+              onClick={() => setShowThemeQuickMenu(!showThemeQuickMenu)}
+              className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold bg-[#F2EDE4] dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-[#EAE4D8] dark:hover:bg-slate-700 transition-all border border-[#E0D9CC] dark:border-slate-700/60 shadow-2xs"
+              title="Pilih Tema Warna Modern Soft Montessori Eropa"
+            >
+              <Palette className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+              <div className="flex items-center gap-1">
+                <span
+                  className="w-2.5 h-2.5 rounded-full shadow-inner ring-1 ring-black/10"
+                  style={{ backgroundColor: primaryColor }}
+                />
+                <span className="hidden md:inline font-bold">
+                  {theme ? theme.regionalTitle : 'Montessori'}
+                </span>
+              </div>
+              <ChevronDown className="w-3 h-3 text-slate-400" />
+            </button>
+
+            {/* Quick Theme Dropdown */}
+            {showThemeQuickMenu && (
+              <div
+                id="theme-quick-dropdown"
+                className="absolute right-0 mt-2 w-72 rounded-2xl bg-[#FCFAF6] dark:bg-[#161C23] border border-[#E8E2D6] dark:border-[#242D38] shadow-2xl p-2.5 z-50 text-xs animate-fadeIn"
+              >
+                <div className="flex items-center justify-between px-2 py-1 mb-1 border-b border-[#EAE4D8] dark:border-[#242D38]">
+                  <span className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                    <Palette className="w-3.5 h-3.5 text-amber-500" />
+                    Warna Montessori Eropa
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-medium">3 Pilihan</span>
+                </div>
+
+                <div className="space-y-1.5 py-1">
+                  {themesList.map((thm) => {
+                    const isSelected = activeThemeId === thm.id;
+                    return (
+                      <button
+                        key={thm.id}
+                        onClick={() => {
+                          onSelectTheme(thm.id);
+                          setShowThemeQuickMenu(false);
+                        }}
+                        className={`w-full flex items-center justify-between p-2 rounded-xl text-left transition-all ${
+                          isSelected
+                            ? 'bg-[#F0EBE0] dark:bg-slate-800 ring-1 ring-[#D8D0C0] dark:ring-slate-700'
+                            : 'hover:bg-[#F6F2E9] dark:hover:bg-slate-800/60'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          {/* 3 mini swatches */}
+                          <div className="flex -space-x-1 shrink-0">
+                            <span
+                              className="w-3.5 h-3.5 rounded-full ring-1 ring-white dark:ring-slate-900 shadow-2xs"
+                              style={{ backgroundColor: thm.swatches.primary }}
+                            />
+                            <span
+                              className="w-3.5 h-3.5 rounded-full ring-1 ring-white dark:ring-slate-900 shadow-2xs"
+                              style={{ backgroundColor: thm.swatches.accent }}
+                            />
+                            <span
+                              className="w-3.5 h-3.5 rounded-full ring-1 ring-white dark:ring-slate-900 shadow-2xs"
+                              style={{ backgroundColor: thm.swatches.secondary }}
+                            />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-bold text-slate-800 dark:text-slate-200 truncate">
+                              {thm.name}
+                            </p>
+                            <p className="text-[10px] text-slate-400 truncate">
+                              {thm.regionalTitle}
+                            </p>
+                          </div>
+                        </div>
+
+                        {isSelected && (
+                          <Check
+                            className="w-4 h-4 shrink-0 font-bold"
+                            style={{ color: thm.colors.primary }}
+                          />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="pt-2 mt-1 border-t border-[#EAE4D8] dark:border-[#242D38]">
+                  <button
+                    onClick={() => {
+                      setShowThemeQuickMenu(false);
+                      onOpenThemeModal();
+                    }}
+                    className="w-full py-1.5 px-2 rounded-xl text-center text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-[#F0EBE0] dark:hover:bg-slate-800 flex items-center justify-center gap-1.5 transition-colors"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                    Buka Opsi Warna & Mode Lengkap
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Period selector */}
-          <div className="relative hidden sm:block">
-            <div className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700/60">
-              <Calendar className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+          <div className="relative hidden xl:block">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl bg-[#F2EDE4] dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-[#E0D9CC] dark:border-slate-700/60">
+              <Calendar
+                className="w-3.5 h-3.5"
+                style={{ color: primaryColor }}
+              />
               <select
                 id="period-select-dropdown"
                 value={period}
@@ -135,16 +280,16 @@ export const Navbar: React.FC<NavbarProps> = ({
                 aria-label="Pilih Periode Laporan"
                 className="bg-transparent border-none text-xs font-semibold focus:outline-none cursor-pointer text-slate-800 dark:text-slate-200"
               >
-                <option value="hari_ini" className="bg-white dark:bg-slate-800">
+                <option value="hari_ini" className="bg-[#FCFAF6] dark:bg-slate-800">
                   {periodLabels.hari_ini}
                 </option>
-                <option value="7_hari" className="bg-white dark:bg-slate-800">
+                <option value="7_hari" className="bg-[#FCFAF6] dark:bg-slate-800">
                   {periodLabels['7_hari']}
                 </option>
-                <option value="bulan_ini" className="bg-white dark:bg-slate-800">
+                <option value="bulan_ini" className="bg-[#FCFAF6] dark:bg-slate-800">
                   {periodLabels.bulan_ini}
                 </option>
-                <option value="tahun_ini" className="bg-white dark:bg-slate-800">
+                <option value="tahun_ini" className="bg-[#FCFAF6] dark:bg-slate-800">
                   {periodLabels.tahun_ini}
                 </option>
               </select>
@@ -156,17 +301,20 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               id="export-menu-toggle-btn"
               onClick={() => setShowExportMenu(!showExportMenu)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors border border-slate-200 dark:border-slate-700"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold bg-[#F2EDE4] dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-[#EAE4D8] dark:hover:bg-slate-700 transition-colors border border-[#E0D9CC] dark:border-slate-700"
               title="Unduh Laporan Keuangan"
             >
-              <FileText className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-              <span className="hidden md:inline">Unduh Laporan</span>
+              <FileText
+                className="w-3.5 h-3.5"
+                style={{ color: primaryColor }}
+              />
+              <span className="hidden lg:inline">Unduh</span>
             </button>
 
             {showExportMenu && (
               <div
                 id="export-dropdown-menu"
-                className="absolute right-0 mt-2 w-48 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl py-1.5 z-50 text-xs font-medium"
+                className="absolute right-0 mt-2 w-48 rounded-2xl bg-[#FCFAF6] dark:bg-[#161C23] border border-[#E8E2D6] dark:border-[#242D38] shadow-xl py-1.5 z-50 text-xs font-medium animate-fadeIn"
               >
                 <div className="px-3 py-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                   Format Berkas
@@ -177,9 +325,12 @@ export const Navbar: React.FC<NavbarProps> = ({
                     onExportExcel();
                     setShowExportMenu(false);
                   }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-left text-slate-700 dark:text-slate-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 hover:text-emerald-700 dark:hover:text-emerald-400"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-left text-slate-700 dark:text-slate-200 hover:bg-[#F2ECE0] dark:hover:bg-slate-800"
                 >
-                  <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                  <FileSpreadsheet
+                    className="w-4 h-4"
+                    style={{ color: primaryColor }}
+                  />
                   <div>
                     <p className="font-semibold">Unduh Excel (.csv)</p>
                     <p className="text-[10px] text-slate-400">Tabel & Buku Kas Lengkap</p>
@@ -191,7 +342,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     onExportWord();
                     setShowExportMenu(false);
                   }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-left text-slate-700 dark:text-slate-200 hover:bg-blue-50 dark:hover:bg-blue-950/40 hover:text-blue-700 dark:hover:text-blue-400"
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-left text-slate-700 dark:text-slate-200 hover:bg-[#F2ECE0] dark:hover:bg-slate-800"
                 >
                   <FileText className="w-4 h-4 text-blue-600" />
                   <div>
@@ -207,7 +358,11 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             id="quick-add-transaction-btn"
             onClick={onOpenAddModal}
-            className="flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs sm:text-sm font-semibold shadow-sm shadow-emerald-600/30 transition-all"
+            className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-xl text-white text-xs sm:text-sm font-semibold shadow-sm transition-all active:scale-95 shrink-0"
+            style={{
+              backgroundColor: primaryColor,
+              boxShadow: `0 4px 12px ${primaryColor}40`,
+            }}
           >
             <Plus className="w-4 h-4" />
             <span className="hidden xs:inline">Catat Transaksi</span>
@@ -218,27 +373,39 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               id="notification-bell-btn"
               onClick={() => setShowNotifications(!showNotifications)}
-              className="relative p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="relative p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-[#F2ECE2] dark:hover:bg-slate-800 transition-colors"
               aria-label="Pemberitahuan"
             >
               <Bell className="w-4 h-4" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900 animate-pulse"></span>
+              <span
+                className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full ring-2 ring-white dark:ring-slate-900 animate-pulse"
+                style={{ backgroundColor: primaryColor }}
+              />
             </button>
 
             {showNotifications && (
               <div
                 id="notifications-popover"
-                className="absolute right-0 mt-2 w-80 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-3 z-50 text-xs"
+                className="absolute right-0 mt-2 w-80 rounded-2xl bg-[#FCFAF6] dark:bg-[#161C23] border border-[#E8E2D6] dark:border-[#242D38] shadow-2xl p-3 z-50 text-xs animate-fadeIn"
               >
-                <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center justify-between pb-2 mb-2 border-b border-[#EAE4D8] dark:border-[#242D38]">
                   <span className="font-bold text-slate-900 dark:text-white">Pemberitahuan Usaha</span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-semibold">
+                  <span
+                    className="text-[10px] px-2 py-0.5 rounded-full font-semibold"
+                    style={{
+                      backgroundColor: theme?.colors.secondary,
+                      color: primaryColor,
+                    }}
+                  >
                     2 Baru
                   </span>
                 </div>
                 <div className="space-y-2">
-                  <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 flex items-start gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                  <div className="p-2.5 rounded-xl bg-white dark:bg-slate-800/60 border border-[#EAE4D8] dark:border-transparent flex items-start gap-2.5">
+                    <CheckCircle2
+                      className="w-4 h-4 shrink-0 mt-0.5"
+                      style={{ color: primaryColor }}
+                    />
                     <div>
                       <p className="font-semibold text-slate-800 dark:text-slate-200">
                         Pencairan QRIS Berhasil
@@ -266,32 +433,86 @@ export const Navbar: React.FC<NavbarProps> = ({
             )}
           </div>
 
-          {/* Dark Mode Toggle */}
-          <button
-            id="dark-mode-toggle-btn"
-            onClick={() => setIsDarkMode(!isDarkMode)}
-            className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            title={isDarkMode ? 'Ganti ke Mode Terang' : 'Ganti ke Mode Gelap'}
-            aria-label="Toggle Mode Gelap/Terang"
+          {/* DUA MODE TAMPILAN: LIGHT MODE (OFF-WHITE) & DARK MODE */}
+          <div
+            className="inline-flex p-0.5 rounded-xl bg-[#EFE8DD] dark:bg-[#1E252E] border border-[#DDD5C7] dark:border-[#2B3542] text-xs font-semibold shrink-0"
+            title="Dua Mode Tampilan: Light Mode (Off-White) vs Dark Mode"
           >
-            {isDarkMode ? (
-              <Sun className="w-4 h-4 text-amber-400" />
-            ) : (
-              <Moon className="w-4 h-4 text-slate-600" />
-            )}
-          </button>
+            <button
+              id="mode-offwhite-btn"
+              onClick={() => setIsDarkMode(false)}
+              className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-lg transition-all ${
+                !isDarkMode
+                  ? 'bg-[#FCFAF6] text-amber-900 shadow-2xs font-bold border border-[#E6DFD2]'
+                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
+              }`}
+              title="Aktifkan Light Mode (Off-White Alabaster)"
+              aria-label="Mode Terang Off-White"
+            >
+              <Sun className="w-3.5 h-3.5 text-amber-600" />
+              <span className="hidden sm:inline text-[11px]">Off-White</span>
+            </button>
+            <button
+              id="mode-dark-btn"
+              onClick={() => setIsDarkMode(true)}
+              className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-lg transition-all ${
+                isDarkMode
+                  ? 'bg-[#12171E] text-amber-300 shadow-2xs font-bold border border-[#2B3644]'
+                  : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
+              }`}
+              title="Aktifkan Dark Mode (Deep Charcoal Night)"
+              aria-label="Mode Gelap Dark Mode"
+            >
+              <Moon className="w-3.5 h-3.5 text-amber-400" />
+              <span className="hidden sm:inline text-[11px]">Dark</span>
+            </button>
+          </div>
 
-          {/* UMKM Profile Avatar */}
-          <div className="flex items-center gap-2 pl-1 border-l border-slate-200 dark:border-slate-800">
-            <div className="w-8 h-8 rounded-full bg-emerald-700 text-white font-bold text-xs flex items-center justify-center shadow-inner">
-              FN
+          {/* Kelola Pengguna & Persetujuan Akun Google */}
+          {onOpenUserManagementModal && (
+            <button
+              id="navbar-manage-users-btn"
+              onClick={onOpenUserManagementModal}
+              className="relative flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold bg-[#F2EDE4] dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-[#EAE4D8] dark:hover:bg-slate-700 transition-all border border-[#E0D9CC] dark:border-slate-700/60 shadow-2xs cursor-pointer"
+              title="Kelola Pengguna, Persetujuan Akun Google & Ubah Password Admin"
+            >
+              <Users className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+              <span className="hidden md:inline font-bold">Kelola Pengguna</span>
+              {pendingRequestsCount > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-rose-500 text-white animate-pulse">
+                  {pendingRequestsCount}
+                </span>
+              )}
+            </button>
+          )}
+
+          {/* UMKM Profile Avatar & Logout */}
+          <div className="flex items-center gap-2 pl-1 border-l border-[#EAE4D8] dark:border-[#242D38]">
+            <div
+              className="w-8 h-8 rounded-full text-white font-bold text-xs flex items-center justify-center shadow-inner transition-colors"
+              style={{ backgroundColor: primaryColor }}
+            >
+              PR
             </div>
-            <div className="hidden xl:block text-left">
+            <div className="hidden 2xl:block text-left">
               <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 leading-none">
                 Pak Rahman
               </p>
               <p className="text-[10px] text-slate-400 leading-none mt-1">Owner Finora</p>
             </div>
+
+            {onLogout && (
+              <button
+                id="navbar-logout-btn"
+                onClick={onLogout}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-[#8E3B27] dark:text-[#ECA18D] bg-[#FBECE6] dark:bg-[#2C1914] hover:bg-[#F6DDD4] dark:hover:bg-[#3D221C] border border-[#ECC8B9] dark:border-[#4B281F] transition-colors ml-1"
+                title="Keluar ke Welcome Screen"
+                aria-label="Keluar / Logout"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Keluar</span>
+              </button>
+            )}
           </div>
         </div>
       </div>

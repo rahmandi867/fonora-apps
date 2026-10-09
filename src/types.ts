@@ -74,6 +74,86 @@ export interface FinancialSummary {
   transaksiBerhasil: number;
 }
 
-export type ActiveTab = 'dashboard' | 'transaksi' | 'laporan' | 'produk' | 'insight';
+export type ActiveTab = 'dashboard' | 'transaksi' | 'laporan' | 'rekap_tahunan' | 'produk' | 'insight';
 
 export type PeriodFilter = 'hari_ini' | '7_hari' | 'bulan_ini' | 'tahun_ini';
+
+export interface MonthlyClosingRecord {
+  id: string;
+  bulanKey: string; // e.g. "2026-01"
+  namaBulan: string; // e.g. "Januari 2026"
+  tanggalTutup: string;
+  totalPendapatan: number;
+  totalPengeluaran: number;
+  labaBersih: number;
+  saldoKasAwal: number;
+  saldoKasAkhir: number;
+  totalTransaksi: number;
+  status: 'ditutup' | 'aktif';
+  closedBy: string;
+  catatan?: string;
+  transaksiTersimpan: Transaction[];
+}
+
+export interface AnnualReportSummary {
+  tahun: number;
+  status: 'aktif' | 'ditutup';
+  totalPendapatan: number;
+  totalPengeluaran: number;
+  labaBersih: number;
+  marginRataRata: number;
+  saldoKasAkhir: number;
+  rekapBulanan: {
+    bulan: string;
+    bulanKey: string;
+    pendapatan: number;
+    pengeluaran: number;
+    laba: number;
+    margin: number;
+    status: 'ditutup' | 'berjalan' | 'belum_mulai';
+    totalMutasi: number;
+  }[];
+  catatanTahunan?: string;
+  closedBy?: string;
+  tanggalTutup?: string;
+}
+
+export type UserRole = 'admin' | 'kasir' | 'staf';
+
+export interface AppUser {
+  id: string;
+  name: string;
+  username: string;
+  email: string;
+  password?: string;
+  role: UserRole;
+  roleTitle: string;
+  createdAt: string;
+  authProvider?: 'local' | 'google';
+  isActive: boolean;
+}
+
+export interface UserRegistrationRequest {
+  id: string;
+  name: string;
+  email: string;
+  googleId?: string;
+  alasanPengajuan?: string;
+  noHp?: string;
+  requestDate: string;
+  status: 'pending' | 'disetujui' | 'ditolak';
+  approvedRole?: UserRole;
+  approvedBy?: string;
+  approvedDate?: string;
+}
+
+export interface ResetAuditLog {
+  id: string;
+  timestamp: string;
+  adminName: string;
+  adminEmail: string;
+  actionType: 'bersihkan_transaksi' | 'reset_pabrik' | 'tutup_buku_tahunan';
+  saldoKasAwalBaru: number;
+  transaksiDihapusCount: number;
+  keterangan: string;
+}

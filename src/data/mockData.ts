@@ -5,7 +5,9 @@ import {
   ExpenseCategoryItem, 
   ProductSales, 
   BusinessInsight, 
-  Transaction 
+  Transaction,
+  AppUser,
+  UserRegistrationRequest
 } from '../types';
 
 export const initialSummary: FinancialSummary = {
@@ -301,5 +303,210 @@ export const initialTransactions: Transaction[] = [
     metodePembayaran: 'QRIS',
     status: 'sukses',
     pelangganAtauVendor: 'Komunitas Pecinta Kopi',
-  }
+  },
+  // Transaksi Bulan Januari 2026 (Untuk pengujian filter bulan & audit tutup buku)
+  {
+    id: 'TRX-20260131-013',
+    tanggal: '2026-01-31 20:45',
+    deskripsi: 'Penjualan Akhir Bulan Kasir Januari',
+    kategori: 'Penjualan F&B',
+    tipe: 'pemasukan',
+    nominal: 2850000,
+    metodePembayaran: 'QRIS',
+    status: 'sukses',
+    pelangganAtauVendor: 'Pelanggan Outlet Sore & Malam',
+    catatan: 'Rekap omzet weekend penutup Januari',
+  },
+  {
+    id: 'TRX-20260128-014',
+    tanggal: '2026-01-28 15:30',
+    deskripsi: 'Pembelian Mesin Grinder Tambahan Espresso',
+    kategori: 'Lain-lain & Perawatan',
+    tipe: 'pengeluaran',
+    nominal: 3200000,
+    metodePembayaran: 'Transfer Bank',
+    status: 'sukses',
+    pelangganAtauVendor: 'PT Mahadaya Coffee Tech',
+    catatan: 'Investasi alat grinder komersial baru',
+  },
+  {
+    id: 'TRX-20260124-015',
+    tanggal: '2026-01-24 19:15',
+    deskripsi: 'Live Music & Night Special Promo Sale',
+    kategori: 'Penjualan F&B',
+    tipe: 'pemasukan',
+    nominal: 3950000,
+    metodePembayaran: 'QRIS',
+    status: 'sukses',
+    pelangganAtauVendor: 'Pelanggan Komunitas Musik',
+  },
+  {
+    id: 'TRX-20260118-016',
+    tanggal: '2026-01-18 10:20',
+    deskripsi: 'Tagihan Listrik PLN & Internet Wi-Fi Kantor Jan',
+    kategori: 'Sewa & Utilitas',
+    tipe: 'pengeluaran',
+    nominal: 1750000,
+    metodePembayaran: 'Transfer Bank',
+    status: 'sukses',
+    pelangganAtauVendor: 'PLN & Indihome Telkom',
+  },
+  {
+    id: 'TRX-20260112-017',
+    tanggal: '2026-01-12 11:00',
+    deskripsi: 'Pengadaan Susu Pasteurisasi & Sirup Perisa',
+    kategori: 'Bahan Baku (HPP)',
+    tipe: 'pengeluaran',
+    nominal: 1650000,
+    metodePembayaran: 'Transfer Bank',
+    status: 'sukses',
+    pelangganAtauVendor: 'Distributor Fresh Milk Nusantara',
+  },
+  {
+    id: 'TRX-20260105-018',
+    tanggal: '2026-01-05 16:40',
+    deskripsi: 'Penjualan Paket Kopi Libur Tahun Baru',
+    kategori: 'Penjualan F&B',
+    tipe: 'pemasukan',
+    nominal: 4100000,
+    metodePembayaran: 'QRIS',
+    status: 'sukses',
+    pelangganAtauVendor: 'Wisatawan & Pelanggan Lokal',
+  },
+  {
+    id: 'TRX-20260102-019',
+    tanggal: '2026-01-02 08:00',
+    deskripsi: 'Setoran Modal Kas Awal Pembukuan 2026',
+    kategori: 'Lain-lain & Perawatan',
+    tipe: 'pemasukan',
+    nominal: 20000000,
+    metodePembayaran: 'Transfer Bank',
+    status: 'sukses',
+    pelangganAtauVendor: 'Pak Rahman (Owner)',
+    catatan: 'Modal kerja awal tahun fiskal 2026',
+  },
+];
+
+// Riwayat Tutup Buku Bulanan (Arsip Buku yang telah ditutup)
+export const initialClosedBooks = [
+  {
+    id: 'CLS-202601',
+    bulanKey: '2026-01',
+    namaBulan: 'Januari 2026',
+    tanggalTutup: '2026-01-31 23:59',
+    totalPendapatan: 30900000,
+    totalPengeluaran: 6600000,
+    labaBersih: 24300000,
+    saldoKasAwal: 20000000,
+    saldoKasAkhir: 44300000,
+    totalTransaksi: 7,
+    status: 'ditutup' as const,
+    closedBy: 'Pak Rahman (Owner)',
+    catatan: 'Buku Januari 2026 ditutup resmi. Saldo kas akhir Rp 44.300.000 dialihkan sebagai modal pembuka Februari.',
+    transaksiTersimpan: [],
+  },
+];
+
+// Data Rekapitulasi Tahunan (Tahun Fiskal 2026)
+export const initialAnnualSummary = {
+  tahun: 2026,
+  status: 'aktif' as const,
+  totalPendapatan: 643850000,
+  totalPengeluaran: 397500000,
+  labaBersih: 246350000,
+  marginRataRata: 38.26,
+  saldoKasAkhir: 128450000,
+  rekapBulanan: [
+    { bulan: 'Januari', bulanKey: '2026-01', pendapatan: 58200000, pengeluaran: 39100000, laba: 19100000, margin: 32.8, status: 'ditutup' as const, totalMutasi: 142 },
+    { bulan: 'Februari', bulanKey: '2026-02', pendapatan: 61500000, pengeluaran: 41200000, laba: 20300000, margin: 33.0, status: 'ditutup' as const, totalMutasi: 156 },
+    { bulan: 'Maret', bulanKey: '2026-03', pendapatan: 64800000, pengeluaran: 42000000, laba: 22800000, margin: 35.1, status: 'ditutup' as const, totalMutasi: 168 },
+    { bulan: 'April', bulanKey: '2026-04', pendapatan: 69400000, pengeluaran: 44300000, laba: 25100000, margin: 36.1, status: 'ditutup' as const, totalMutasi: 174 },
+    { bulan: 'Mei', bulanKey: '2026-05', pendapatan: 74200000, pengeluaran: 46800000, laba: 27400000, margin: 36.9, status: 'ditutup' as const, totalMutasi: 182 },
+    { bulan: 'Juni', bulanKey: '2026-06', pendapatan: 71900000, pengeluaran: 45200000, laba: 26700000, margin: 37.1, status: 'ditutup' as const, totalMutasi: 169 },
+    { bulan: 'Juli', bulanKey: '2026-07', pendapatan: 78500000, pengeluaran: 48100000, laba: 30400000, margin: 38.7, status: 'ditutup' as const, totalMutasi: 195 },
+    { bulan: 'Agustus', bulanKey: '2026-08', pendapatan: 81200000, pengeluaran: 49800000, laba: 31400000, margin: 38.6, status: 'ditutup' as const, totalMutasi: 201 },
+    { bulan: 'September', bulanKey: '2026-09', pendapatan: 84650000, pengeluaran: 49300000, laba: 35350000, margin: 41.7, status: 'berjalan' as const, totalMutasi: 215 },
+    { bulan: 'Oktober', bulanKey: '2026-10', pendapatan: 0, pengeluaran: 0, laba: 0, margin: 0, status: 'belum_mulai' as const, totalMutasi: 0 },
+    { bulan: 'November', bulanKey: '2026-11', pendapatan: 0, pengeluaran: 0, laba: 0, margin: 0, status: 'belum_mulai' as const, totalMutasi: 0 },
+    { bulan: 'Desember', bulanKey: '2026-12', pendapatan: 0, pengeluaran: 0, laba: 0, margin: 0, status: 'belum_mulai' as const, totalMutasi: 0 },
+  ],
+  catatanTahunan: 'Tahun 2026 menunjukkan peningkatan margin yang konsisten dari 32.8% ke 41.7% berkat penghematan HPP.',
+};
+
+// Log Riwayat Audit Reset Keamanan Admin
+export const initialResetLogs = [
+  {
+    id: 'RST-INIT-001',
+    timestamp: '2026-01-01 07:30',
+    adminName: 'Pak Rahman',
+    adminEmail: 'rahman@finora.id',
+    actionType: 'bersihkan_transaksi' as const,
+    saldoKasAwalBaru: 20000000,
+    transaksiDihapusCount: 0,
+    keterangan: 'Inisialisasi sistem pembukuan Finora untuk pembukaan tahun fiskal baru 2026.',
+  },
+];
+
+// Data Pengguna Terdaftar Finora (User Management)
+export const initialUsers: AppUser[] = [
+  {
+    id: 'USR-01',
+    name: 'Pak Rahman',
+    username: 'rahman',
+    email: 'rahman@finora.id',
+    password: 'finora2026',
+    role: 'admin',
+    roleTitle: 'Owner / Admin Keuangan',
+    createdAt: '2026-01-01',
+    authProvider: 'local',
+    isActive: true,
+  },
+  {
+    id: 'USR-02',
+    name: 'Siti Kasir',
+    username: 'siti_kasir',
+    email: 'kasir@finora.id',
+    password: 'kasir123',
+    role: 'kasir',
+    roleTitle: 'Kasir Utama',
+    createdAt: '2026-02-15',
+    authProvider: 'local',
+    isActive: true,
+  },
+  {
+    id: 'USR-03',
+    name: 'Budi Barista',
+    username: 'budi_barista',
+    email: 'budi@finora.id',
+    password: 'barista123',
+    role: 'staf',
+    roleTitle: 'Staf Operasional / Barista',
+    createdAt: '2026-03-01',
+    authProvider: 'local',
+    isActive: true,
+  },
+];
+
+// Permintaan Pendaftaran Akun Google Menunggu Persetujuan Developer / Admin
+export const initialRegistrationRequests: UserRegistrationRequest[] = [
+  {
+    id: 'REQ-GOOGLE-01',
+    name: 'Dimas Pratama',
+    email: 'dimas.pratama@gmail.com',
+    googleId: 'g_1092837482910',
+    alasanPengajuan: 'Kasir shift malam & operasional closing Eatery Nusantara',
+    noHp: '0812-9876-5432',
+    requestDate: '2026-09-11 10:15 WIB',
+    status: 'pending',
+  },
+  {
+    id: 'REQ-GOOGLE-02',
+    name: 'Lestari Handayani',
+    email: 'lestari.finance@gmail.com',
+    googleId: 'g_2938475892019',
+    alasanPengajuan: 'Supervisor akuntansi cabang baru & audit internal',
+    noHp: '0813-8765-4321',
+    requestDate: '2026-09-11 11:30 WIB',
+    status: 'pending',
+  },
 ];

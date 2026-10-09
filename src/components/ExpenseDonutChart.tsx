@@ -7,18 +7,32 @@ import {
   Tooltip,
 } from 'recharts';
 import { ExpenseCategoryItem } from '../types';
+import { MontessoriTheme } from '../themes/montessoriThemes';
 import { formatRupiah } from '../utils/formatters';
 
 interface ExpenseDonutChartProps {
   categories: ExpenseCategoryItem[];
   totalPengeluaran: number;
+  theme?: MontessoriTheme;
 }
 
 export const ExpenseDonutChart: React.FC<ExpenseDonutChartProps> = ({
   categories,
   totalPengeluaran,
+  theme,
 }) => {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+
+  // Apply theme palette to categories if available
+  const themedCategories = categories.map((cat, idx) => {
+    if (theme && theme.chart.categories[idx]) {
+      return {
+        ...cat,
+        color: theme.chart.categories[idx],
+      };
+    }
+    return cat;
+  });
 
   const onPieEnter = (_: any, index: number) => {
     setActiveIndex(index);
@@ -28,13 +42,13 @@ export const ExpenseDonutChart: React.FC<ExpenseDonutChartProps> = ({
     setActiveIndex(null);
   };
 
-  const activeCategory = activeIndex !== null ? categories[activeIndex] : null;
+  const activeCategory = activeIndex !== null ? themedCategories[activeIndex] : null;
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload as ExpenseCategoryItem;
       return (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl p-2.5 text-xs">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl p-3 text-xs">
           <p className="font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
             <span
               className="w-2.5 h-2.5 rounded-full"
@@ -46,7 +60,13 @@ export const ExpenseDonutChart: React.FC<ExpenseDonutChartProps> = ({
             Nominal: <span className="font-bold text-slate-900 dark:text-white">{formatRupiah(data.nominal)}</span>
           </p>
           <p className="text-slate-500 dark:text-slate-400">
-            Porsi: <span className="font-bold text-emerald-600 dark:text-emerald-400">{data.persentase}%</span>
+            Porsi:{' '}
+            <span
+              className="font-bold"
+              style={{ color: theme?.colors.primary || '#10b981' }}
+            >
+              {data.persentase}%
+            </span>
           </p>
         </div>
       );
@@ -57,16 +77,29 @@ export const ExpenseDonutChart: React.FC<ExpenseDonutChartProps> = ({
   return (
     <div
       id="expense-donut-chart-card"
-      className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-sm transition-colors flex flex-col justify-between"
+      className="p-5 sm:p-6 rounded-3xl bg-[#FCFAF6] dark:bg-[#161C23] border border-[#E8E2D6] dark:border-[#242D38] shadow-2xs transition-colors flex flex-col justify-between"
     >
       <div>
         <div className="flex items-center justify-between gap-2 mb-1">
           <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
             Komposisi Pengeluaran
           </h3>
-          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-            Alokasi Biaya
-          </span>
+          {theme ? (
+            <span
+              className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+              style={{
+                backgroundColor: theme.colors.secondary,
+                color: theme.colors.primary,
+                border: `1px solid ${theme.colors.borderSoft}`,
+              }}
+            >
+              Soft Montessori
+            </span>
+          ) : (
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+              Alokasi Biaya
+            </span>
+          )}
         </div>
         <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
           Distribusi pos operasional bulan berjalan
@@ -78,7 +111,7 @@ export const ExpenseDonutChart: React.FC<ExpenseDonutChartProps> = ({
             <PieChart>
               <Tooltip content={<CustomTooltip />} />
               <Pie
-                data={categories}
+                data={themedCategories}
                 cx="50%"
                 cy="50%"
                 innerRadius={62}
@@ -88,7 +121,7 @@ export const ExpenseDonutChart: React.FC<ExpenseDonutChartProps> = ({
                 onMouseEnter={onPieEnter}
                 onMouseLeave={onPieLeave}
               >
-                {categories.map((entry, index) => (
+                {themedCategories.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}
                     fill={entry.color}
@@ -114,7 +147,10 @@ export const ExpenseDonutChart: React.FC<ExpenseDonutChartProps> = ({
                 ? formatRupiah(activeCategory.nominal)
                 : formatRupiah(totalPengeluaran)}
             </span>
-            <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+            <span
+              className="text-[10px] font-semibold"
+              style={{ color: theme?.colors.primary || '#10b981' }}
+            >
               {activeCategory ? `${activeCategory.persentase}% porsi` : '100% dialokasikan'}
             </span>
           </div>
@@ -123,7 +159,7 @@ export const ExpenseDonutChart: React.FC<ExpenseDonutChartProps> = ({
 
       {/* Category Legend List */}
       <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
-        {categories.map((cat, idx) => (
+        {themedCategories.map((cat, idx) => (
           <div
             key={cat.kategori}
             onMouseEnter={() => setActiveIndex(idx)}
@@ -136,7 +172,7 @@ export const ExpenseDonutChart: React.FC<ExpenseDonutChartProps> = ({
           >
             <div className="flex items-center gap-2 min-w-0">
               <span
-                className="w-2.5 h-2.5 rounded-full shrink-0"
+                className="w-2.5 h-2.5 rounded-full shrink-0 shadow-xs"
                 style={{ backgroundColor: cat.color }}
               ></span>
               <span className="truncate text-slate-800 dark:text-slate-200">

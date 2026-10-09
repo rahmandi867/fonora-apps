@@ -257,3 +257,158 @@ export const exportToWord = (
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 };
+
+// Export Annual Report to Excel (.csv)
+export const exportAnnualToExcel = (
+  annualSummary: any,
+  fileName = 'Finora_Rekapitulasi_Tahunan'
+) => {
+  const escapeCsv = (val: string | number | undefined) => {
+    if (val === undefined || val === null) return '""';
+    const str = String(val).replace(/"/g, '""');
+    return `"${str}"`;
+  };
+
+  const headers = ['Bulan', 'Bulan Key', 'Pendapatan (Rp)', 'Pengeluaran (Rp)', 'Laba Bersih (Rp)', 'Margin (%)', 'Status Buku', 'Jumlah Mutasi'];
+  
+  const rows = annualSummary.rekapBulanan.map((m: any) => [
+    escapeCsv(m.bulan),
+    escapeCsv(m.bulanKey),
+    escapeCsv(m.pendapatan),
+    escapeCsv(m.pengeluaran),
+    escapeCsv(m.laba),
+    escapeCsv(`${m.margin}%`),
+    escapeCsv(m.status.toUpperCase()),
+    escapeCsv(m.totalMutasi),
+  ]);
+
+  const summaryRows = [
+    ['REKAPITULASI LAPORAN KEUANGAN TAHUNAN FINORA', ''],
+    ['Tahun Buku', escapeCsv(annualSummary.tahun)],
+    ['Status Pembukuan', escapeCsv(annualSummary.status.toUpperCase())],
+    ['Total Pendapatan Tahunan', escapeCsv(annualSummary.totalPendapatan)],
+    ['Total Beban / Pengeluaran Tahunan', escapeCsv(annualSummary.totalPengeluaran)],
+    ['Total Laba Bersih Tahunan', escapeCsv(annualSummary.labaBersih)],
+    ['Rata-rata Margin Keuntungan', escapeCsv(`${annualSummary.marginRataRata}%`)],
+    ['Posisi Saldo Kas Akhir Tahun', escapeCsv(annualSummary.saldoKasAkhir)],
+    ['Catatan Manajemen', escapeCsv(annualSummary.catatanTahunan || '-')],
+    ['', ''],
+  ];
+
+  const csvContent =
+    '\ufeff' +
+    summaryRows.map((r) => r.join(',')).join('\n') +
+    '\n' +
+    headers.join(',') +
+    '\n' +
+    rows.map((e: any[]) => e.join(',')).join('\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', `${fileName}_${annualSummary.tahun}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
+// Export Annual Report to Word (.doc)
+export const exportAnnualToWord = (
+  annualSummary: any,
+  fileName = 'Finora_Laporan_Pertanggungjawaban_Tahunan'
+) => {
+  const rowsHtml = annualSummary.rekapBulanan
+    .map(
+      (m: any) => `
+    <tr>
+      <td>${m.bulan}</td>
+      <td style="text-align: right;">${formatRupiah(m.pendapatan)}</td>
+      <td style="text-align: right;">${formatRupiah(m.pengeluaran)}</td>
+      <td style="text-align: right; font-weight: bold;">${formatRupiah(m.laba)}</td>
+      <td style="text-align: center;">${m.margin}%</td>
+      <td style="text-align: center;">${m.status === 'ditutup' ? 'Ditutup Resmi' : m.status === 'berjalan' ? 'Buku Berjalan' : 'Mendatang'}</td>
+    </tr>
+  `
+    )
+    .join('');
+
+  const wordHtml = `
+    <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+    <head>
+      <meta charset='utf-8'>
+      <title>Laporan Pertanggungjawaban Keuangan Tahunan UMKM</title>
+      <style>
+        body { font-family: 'Calibri', 'Arial', sans-serif; font-size: 11pt; color: #1e293b; margin: 30px; }
+        .kop { border-bottom: 2px solid #0f172a; padding-bottom: 10px; margin-bottom: 20px; text-align: center; }
+        .kop h1 { margin: 0; font-size: 20pt; color: #0f172a; }
+        .kop p { margin: 2px 0; font-size: 9pt; color: #64748b; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 10pt; }
+        th { background-color: #f1f5f9; padding: 8px; border: 1px solid #cbd5e1; font-weight: bold; }
+        td { padding: 8px; border: 1px solid #e2e8f0; }
+      </style>
+    </head>
+    <body>
+      <div class="kop">
+        <h1>FINORA — SISTEM KEUANGAN UMKM</h1>
+        <p>Kopi & Eatery Nusantara • Laporan Pertanggungjawaban Fiskal Tahunan</p>
+        <p>Tahun Buku: ${annualSummary.tahun} • Dicetak pada: ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+      </div>
+
+      <h2>RINGKASAN EKSEKUTIF TAHUN BUKU ${annualSummary.tahun}</h2>
+      <table>
+        <tr><td style="width: 40%; font-weight: bold;">Total Omzet / Pendapatan Tahunan</td><td style="color: #059669; font-weight: bold;">${formatRupiah(annualSummary.totalPendapatan)}</td></tr>
+        <tr><td style="font-weight: bold;">Total Beban & Biaya Operasional</td><td style="color: #e11d48; font-weight: bold;">${formatRupiah(annualSummary.totalPengeluaran)}</td></tr>
+        <tr><td style="font-weight: bold;">Laba Bersih Akumulasi Tahunan</td><td style="color: #2563eb; font-weight: bold;">${formatRupiah(annualSummary.labaBersih)}</td></tr>
+        <tr><td style="font-weight: bold;">Rata-rata Margin Keuntungan</td><td>${annualSummary.marginRataRata}%</td></tr>
+        <tr><td style="font-weight: bold;">Posisi Saldo Kas Akhir Tahun</td><td style="font-weight: bold;">${formatRupiah(annualSummary.saldoKasAkhir)}</td></tr>
+      </table>
+
+      <h2 style="margin-top: 25px;">KONSOLIDASI BULANAN (JANUARI - DESEMBER)</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Bulan</th>
+            <th>Pendapatan</th>
+            <th>Pengeluaran</th>
+            <th>Laba Bersih</th>
+            <th>Margin</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rowsHtml}
+        </tbody>
+      </table>
+
+      <table style="width: 100%; margin-top: 40px;">
+        <tr>
+          <td style="width: 50%; text-align: center; border: none;">
+            <p style="margin: 0; font-size: 11pt; color: #64748b;">Dipersiapkan oleh:</p>
+            <br/><br/><br/>
+            <p style="margin: 0; font-weight: bold;">Bagian Keuangan & Pembukuan</p>
+            <p style="margin: 0; font-size: 9pt; color: #64748b;">Finora System</p>
+          </td>
+          <td style="width: 50%; text-align: center; border: none;">
+            <p style="margin: 0; font-size: 11pt; color: #64748b;">Disetujui oleh:</p>
+            <br/><br/><br/>
+            <p style="margin: 0; font-weight: bold;">Pak Rahman (Owner UMKM)</p>
+            <p style="margin: 0; font-size: 9pt; color: #64748b;">Manajemen Finora</p>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `;
+
+  const blob = new Blob(['\ufeff' + wordHtml], { type: 'application/msword;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', `${fileName}_${annualSummary.tahun}.doc`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
