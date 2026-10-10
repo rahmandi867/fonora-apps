@@ -25,6 +25,7 @@ interface FinancialReportsProps {
   transactions: Transaction[];
   onExportExcel: () => void;
   onExportWord: () => void;
+  currentUser?: { email?: string; role?: string; name?: string } | null;
 }
 
 export interface PnlBreakdownSettings {
@@ -50,7 +51,11 @@ export const FinancialReports: React.FC<FinancialReportsProps> = ({
   transactions,
   onExportExcel,
   onExportWord,
+  currentUser,
 }) => {
+  const isCashier = currentUser?.role
+    ? currentUser.role.toLowerCase().includes('kasir')
+    : false;
   const [activeReportTab, setActiveReportTab] = useState<'laba_rugi' | 'arus_kas' | 'rasio'>('laba_rugi');
   
   // P&L Component Customization without coding (stored in localStorage)
@@ -212,16 +217,18 @@ export const FinancialReports: React.FC<FinancialReportsProps> = ({
                       Tersimpan!
                     </span>
                   )}
-                  <button
-                    type="button"
-                    id="edit-pnl-settings-btn"
-                    onClick={handleOpenEditModal}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-950/80 dark:hover:bg-emerald-900 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 transition-all cursor-pointer shadow-2xs"
-                    title="Ubah rincian komponen HPP dan Beban Operasional langsung dari UI tanpa koding"
-                  >
-                    <Edit3 className="w-3.5 h-3.5" />
-                    <span>Sesuaikan Komponen P&L</span>
-                  </button>
+                  {!isCashier && (
+                    <button
+                      type="button"
+                      id="edit-pnl-settings-btn"
+                      onClick={handleOpenEditModal}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-950/80 dark:hover:bg-emerald-900 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 transition-all cursor-pointer shadow-2xs"
+                      title="Ubah rincian komponen HPP dan Beban Operasional langsung dari UI tanpa koding"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                      <span>Sesuaikan Komponen P&L</span>
+                    </button>
+                  )}
                 </div>
               </div>
 

@@ -24,7 +24,8 @@ import {
   ProductSales,
   AppUser,
   UserRole,
-  UserRegistrationRequest
+  UserRegistrationRequest,
+  StoreBranding
 } from './types';
 import { MontessoriThemeId, MONTESSORI_THEMES } from './themes/montessoriThemes';
 import { WelcomeScreen } from './components/WelcomeScreen';
@@ -46,6 +47,7 @@ import { AddProductModal } from './components/AddProductModal';
 import { TransactionDetailModal } from './components/TransactionDetailModal';
 import { ThemeSelectorModal } from './components/ThemeSelectorModal';
 import { UserManagementModal } from './components/UserManagementModal';
+import { StoreBrandingModal } from './components/StoreBrandingModal';
 import { 
   exportToExcel, 
   exportToWord, 
@@ -223,9 +225,39 @@ export default function App() {
   const [isAdminResetModalOpen, setIsAdminResetModalOpen] = useState(false);
   const [isAnnualClosingModalOpen, setIsAnnualClosingModalOpen] = useState(false);
   const [isUserManagementModalOpen, setIsUserManagementModalOpen] = useState(false);
+  const [isBrandingModalOpen, setIsBrandingModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  // Store Branding State (Editable by Owner/Admin without coding)
+  const defaultBranding: StoreBranding = {
+    brandName: 'Finora',
+    headline: 'Sistem Keuangan Mandiri',
+    storeName: 'Finora Coffee & Eatery',
+    storeCategory: 'F&B / Coffee & Eatery',
+    logoType: 'icon',
+    logoIcon: 'CreditCard',
+    logoUrl: '',
+    badgeText: 'UMKM',
+  };
+
+  const [branding, setBranding] = useState<StoreBranding>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('finora-store-branding');
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch {}
+      }
+    }
+    return defaultBranding;
+  });
+
   const currentTheme = MONTESSORI_THEMES[themeId] || MONTESSORI_THEMES.sage;
+
+  // Persist branding changes
+  useEffect(() => {
+    localStorage.setItem('finora-store-branding', JSON.stringify(branding));
+  }, [branding]);
 
   // Persist state changes
   useEffect(() => {
@@ -298,6 +330,71 @@ export default function App() {
     setIsAuthenticated(false);
     localStorage.removeItem('finora-auth');
     showToast('Anda telah keluar ke Halaman Pembuka.');
+  };
+
+  const handleSwitchUserRole = (newRole: 'admin' | 'kasir') => {
+    if (newRole === 'kasir') {
+      const kasirUser = {
+        email: 'kasir@finora.id',
+        role: 'Kasir Utama',
+        name: 'Siti Kasir',
+      };
+      setCurrentUser(kasirUser);
+      localStorage.setItem('finora-user', JSON.stringify(kasirUser));
+      showToast('Beralih ke peran Kasir (Siti Kasir). Fitur Manajemen Pengguna & Admin dinonaktifkan.');
+    } else {
+      const adminUser = {
+        email: 'rahman@finora.id',
+        role: 'Owner / Admin Keuangan',
+        name: 'Pak Rahman',
+      };
+      setCurrentUser(adminUser);
+      localStorage.setItem('finora-user', JSON.stringify(adminUser));
+      showToast('Beralih ke peran Admin (Pak Rahman). Semua akses dan pengaturan dibuka.');
+    }
+  };
+
+  const handleOpenUserManagementModal = () => {
+    if (currentUser.role.toLowerCase().includes('kasir')) {
+      showToast('Akses Ditolak: Fitur Manajemen Pengguna hanya dapat diakses oleh Admin.');
+      return;
+    }
+    setIsUserManagementModalOpen(true);
+  };
+
+  const handleOpenAdminResetModal = () => {
+    if (currentUser.role.toLowerCase().includes('kasir')) {
+      showToast('Akses Ditolak: Kasir tidak diizinkan mereset transaksi atau pembukuan.');
+      return;
+    }
+    setIsAdminResetModalOpen(true);
+  };
+
+  const handleOpenMonthlyClosingModal = () => {
+    if (currentUser.role.toLowerCase().includes('kasir')) {
+      showToast('Akses Ditolak: Hanya Admin yang berwenang menutup buku bulanan.');
+      return;
+    }
+    setIsMonthlyClosingModalOpen(true);
+  };
+
+  const handleSaveBranding = (newBranding: StoreBranding) => {
+    setBranding(newBranding);
+    showToast(`Identitas merek "${newBranding.brandName}" & headline berhasil diperbarui!`);
+  };
+
+  const handleResetBranding = () => {
+    setBranding(defaultBranding);
+    localStorage.removeItem('finora-store-branding');
+    showToast('Identitas merek dikembalikan ke pengaturan bawaan (Finora).');
+  };
+
+  const handleOpenBrandingModal = () => {
+    if (currentUser.role.toLowerCase().includes('kasir')) {
+      showToast('Akses Ditolak: Hanya Owner / Admin yang dapat mengubah identitas merek.');
+      return;
+    }
+    setIsBrandingModalOpen(true);
   };
 
   const handleSelectTheme = (newThemeId: MontessoriThemeId) => {
@@ -693,6 +790,7 @@ export default function App() {
         users={users}
         registrationRequests={registrationRequests}
         onRequestAccess={handleRequestAccess}
+        branding={branding}
       />
     );
   }
@@ -722,10 +820,13 @@ export default function App() {
           theme={currentTheme}
           onOpenThemeModal={() => setIsThemeModalOpen(true)}
           onLogout={handleLogout}
-          onOpenAdminResetModal={() => setIsAdminResetModalOpen(true)}
-          onOpenMonthlyClosingModal={() => setIsMonthlyClosingModalOpen(true)}
-          onOpenUserManagementModal={() => setIsUserManagementModalOpen(true)}
+          onOpenAdminResetModal={handleOpenAdminResetModal}
+          onOpenMonthlyClosingModal={handleOpenMonthlyClosingModal}
+          onOpenUserManagementModal={handleOpenUserManagementModal}
           pendingRequestsCount={registrationRequests.filter((r) => r.status === 'pending').length}
+          currentUser={currentUser}
+          branding={branding}
+          onOpenBrandingModal={handleOpenBrandingModal}
         />
 
         {/* Main Content Area */}
@@ -748,10 +849,14 @@ export default function App() {
             onSelectTheme={handleSelectTheme}
             onOpenThemeModal={() => setIsThemeModalOpen(true)}
             onLogout={handleLogout}
-            onOpenMonthlyClosingModal={() => setIsMonthlyClosingModalOpen(true)}
-            onOpenAdminResetModal={() => setIsAdminResetModalOpen(true)}
-            onOpenUserManagementModal={() => setIsUserManagementModalOpen(true)}
+            onOpenMonthlyClosingModal={handleOpenMonthlyClosingModal}
+            onOpenAdminResetModal={handleOpenAdminResetModal}
+            onOpenUserManagementModal={handleOpenUserManagementModal}
             pendingRequestsCount={registrationRequests.filter((r) => r.status === 'pending').length}
+            currentUser={currentUser}
+            onSwitchUserRole={handleSwitchUserRole}
+            branding={branding}
+            onOpenBrandingModal={handleOpenBrandingModal}
           />
 
           {/* Main Dashboard Views */}
@@ -796,9 +901,10 @@ export default function App() {
                       globalSearchTerm={searchTerm}
                       selectedMonthFilter={selectedMonthFilter}
                       onSelectMonthFilter={setSelectedMonthFilter}
-                      onOpenMonthlyClosingModal={() => setIsMonthlyClosingModalOpen(true)}
-                      onOpenAdminResetModal={() => setIsAdminResetModalOpen(true)}
+                      onOpenMonthlyClosingModal={handleOpenMonthlyClosingModal}
+                      onOpenAdminResetModal={handleOpenAdminResetModal}
                       closedBooks={closedBooks}
+                      currentUser={currentUser}
                     />
                   </div>
                   <div className="xl:col-span-1">
@@ -808,6 +914,7 @@ export default function App() {
                       onResetProducts={handleResetProducts}
                       onDeleteProduct={handleDeleteProduct}
                       theme={currentTheme}
+                      currentUser={currentUser}
                     />
                   </div>
                 </div>
@@ -818,6 +925,7 @@ export default function App() {
                   transactions={transactions}
                   onExportExcel={handleExportExcel}
                   onExportWord={handleExportWord}
+                  currentUser={currentUser}
                 />
               </>
             )}
@@ -835,9 +943,10 @@ export default function App() {
                   globalSearchTerm={searchTerm}
                   selectedMonthFilter={selectedMonthFilter}
                   onSelectMonthFilter={setSelectedMonthFilter}
-                  onOpenMonthlyClosingModal={() => setIsMonthlyClosingModalOpen(true)}
-                  onOpenAdminResetModal={() => setIsAdminResetModalOpen(true)}
+                  onOpenMonthlyClosingModal={handleOpenMonthlyClosingModal}
+                  onOpenAdminResetModal={handleOpenAdminResetModal}
                   closedBooks={closedBooks}
+                  currentUser={currentUser}
                 />
               </div>
             )}
@@ -848,10 +957,17 @@ export default function App() {
                 annualSummary={annualSummary}
                 closedBooks={closedBooks}
                 onSelectMonthForInspection={handleSelectMonthForInspection}
-                onOpenAnnualClosingModal={() => setIsAnnualClosingModalOpen(true)}
+                onOpenAnnualClosingModal={() => {
+                  if (currentUser.role.toLowerCase().includes('kasir')) {
+                    showToast('Akses Ditolak: Hanya Admin yang dapat menutup tahun buku.');
+                    return;
+                  }
+                  setIsAnnualClosingModalOpen(true);
+                }}
                 onExportExcel={handleExportAnnualExcel}
                 onExportWord={handleExportAnnualWord}
                 theme={currentTheme}
+                currentUser={currentUser}
               />
             )}
 
@@ -863,6 +979,7 @@ export default function App() {
                   transactions={transactions}
                   onExportExcel={handleExportExcel}
                   onExportWord={handleExportWord}
+                  currentUser={currentUser}
                 />
               </div>
             )}
@@ -877,6 +994,7 @@ export default function App() {
                   onDeleteProduct={handleDeleteProduct}
                   theme={currentTheme}
                   isFullView={true}
+                  currentUser={currentUser}
                 />
               </div>
             )}
@@ -977,6 +1095,16 @@ export default function App() {
         onRejectRequest={handleRejectRegistrationRequest}
         onChangeAdminPassword={handleChangeAdminPassword}
         adminCurrentPassword={adminPassword}
+      />
+
+      {/* Store Branding, Logo & Headline Modal (Khusus Owner/Admin) */}
+      <StoreBrandingModal
+        isOpen={isBrandingModalOpen}
+        onClose={() => setIsBrandingModalOpen(false)}
+        branding={branding}
+        onSaveBranding={handleSaveBranding}
+        onResetBranding={handleResetBranding}
+        theme={currentTheme}
       />
     </div>
   );

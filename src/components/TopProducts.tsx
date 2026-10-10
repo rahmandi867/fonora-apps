@@ -28,6 +28,7 @@ interface TopProductsProps {
   onDeleteProduct?: (id: string) => void;
   theme?: MontessoriTheme;
   isFullView?: boolean;
+  currentUser?: { email?: string; role?: string; name?: string } | null;
 }
 
 export const TopProducts: React.FC<TopProductsProps> = ({ 
@@ -37,7 +38,11 @@ export const TopProducts: React.FC<TopProductsProps> = ({
   onDeleteProduct,
   theme,
   isFullView = false,
+  currentUser,
 }) => {
+  const isCashier = currentUser?.role
+    ? currentUser.role.toLowerCase().includes('kasir')
+    : false;
   const [filterKategori, setFilterKategori] = useState<string>('Semua');
   const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
   const [productToDelete, setProductToDelete] = useState<ProductSales | null>(null);
@@ -101,7 +106,7 @@ export const TopProducts: React.FC<TopProductsProps> = ({
 
         {/* Action Buttons: + Tambah Produk & Tombol Reset */}
         <div className="flex items-center gap-2 flex-wrap self-start sm:self-auto">
-          {onResetProducts && (
+          {!isCashier && onResetProducts && (
             <button
               type="button"
               id="reset-products-btn"

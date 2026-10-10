@@ -14,15 +14,20 @@ import {
   UserPlus,
   X,
   Send,
-  Phone
+  Phone,
+  Coffee,
+  ShoppingBag,
+  Utensils,
+  Landmark
 } from 'lucide-react';
-import { AppUser, UserRegistrationRequest } from '../types';
+import { AppUser, UserRegistrationRequest, StoreBranding } from '../types';
 
 interface WelcomeScreenProps {
   onLogin: (userData: { email: string; role: string; name: string }) => void;
   users?: AppUser[];
   onRequestAccess?: (request: UserRegistrationRequest) => void;
   registrationRequests?: UserRegistrationRequest[];
+  branding?: StoreBranding;
 }
 
 export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ 
@@ -30,6 +35,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   users = [],
   onRequestAccess,
   registrationRequests = [],
+  branding,
 }) => {
   const [email, setEmail] = useState('rahman@finora.id');
   const [password, setPassword] = useState('finora2026');
@@ -214,17 +220,42 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
       {/* Top Minimalist Brand Bar */}
       <header className="relative z-10 w-full max-w-6xl mx-auto px-6 py-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-[#BD6048] text-white flex items-center justify-center shadow-md shadow-[#BD6048]/25">
-            <CreditCard className="w-5 h-5" />
+          <div className="w-10 h-10 rounded-2xl bg-[#BD6048] text-white flex items-center justify-center shadow-md shadow-[#BD6048]/25 overflow-hidden">
+            {branding?.logoType === 'custom_url' && branding?.logoUrl ? (
+              <img
+                src={branding.logoUrl}
+                alt={branding.brandName || 'Logo'}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            ) : (
+              (() => {
+                switch (branding?.logoIcon) {
+                  case 'Store': return <Store className="w-5 h-5" />;
+                  case 'Coffee': return <Coffee className="w-5 h-5" />;
+                  case 'Utensils': return <Utensils className="w-5 h-5" />;
+                  case 'ShoppingBag': return <ShoppingBag className="w-5 h-5" />;
+                  case 'Sparkles': return <Sparkles className="w-5 h-5" />;
+                  case 'Landmark': return <Landmark className="w-5 h-5" />;
+                  default: return <CreditCard className="w-5 h-5" />;
+                }
+              })()
+            )}
           </div>
           <div>
             <span className="font-extrabold text-xl tracking-tight text-[#2B2723] flex items-center gap-1.5">
-              Finora
-              <span className="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider bg-[#FBECE6] text-[#8E3B27] border border-[#ECC8B9]">
-                UMKM
-              </span>
+              {branding?.brandName || 'Finora'}
+              {branding?.badgeText && (
+                <span className="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider bg-[#FBECE6] text-[#8E3B27] border border-[#ECC8B9]">
+                  {branding.badgeText}
+                </span>
+              )}
             </span>
-            <p className="text-[11px] text-[#786F66]">Sistem Keuangan & Pembukuan Kas</p>
+            <p className="text-[11px] text-[#786F66]">
+              {branding?.headline || 'Sistem Keuangan & Pembukuan Kas'}
+            </p>
           </div>
         </div>
 
@@ -247,10 +278,10 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
               </div>
 
               <h1 className="text-2xl sm:text-3xl font-extrabold text-[#28231E] tracking-tight">
-                Selamat Datang
+                Selamat Datang di {branding?.brandName || 'Finora'}
               </h1>
               <p className="text-xs sm:text-sm text-[#73685E] mt-1.5 leading-relaxed">
-                Masuk ke sistem keuangan untuk mengelola pembukuan, mutasi kas, dan analitik usaha Anda.
+                Masuk ke sistem keuangan {branding?.storeName || 'Finora Coffee & Eatery'} untuk mengelola pembukuan, mutasi kas, dan analitik usaha Anda.
               </p>
             </div>
 

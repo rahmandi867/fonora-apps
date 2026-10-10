@@ -16,9 +16,14 @@ import {
   Calendar,
   ShieldAlert,
   Archive,
-  Users
+  Users,
+  Coffee,
+  Utensils,
+  Landmark,
+  Edit3,
+  Sliders
 } from 'lucide-react';
-import { ActiveTab } from '../types';
+import { ActiveTab, StoreBranding, LogoIconType } from '../types';
 import { MontessoriTheme } from '../themes/montessoriThemes';
 
 interface SidebarProps {
@@ -35,6 +40,9 @@ interface SidebarProps {
   onOpenMonthlyClosingModal?: () => void;
   onOpenUserManagementModal?: () => void;
   pendingRequestsCount?: number;
+  currentUser?: { email?: string; role?: string; name?: string } | null;
+  branding?: StoreBranding;
+  onOpenBrandingModal?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -51,7 +59,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenMonthlyClosingModal,
   onOpenUserManagementModal,
   pendingRequestsCount = 0,
+  currentUser,
+  branding,
+  onOpenBrandingModal,
 }) => {
+  const isCashier = currentUser?.role
+    ? currentUser.role.toLowerCase().includes('kasir')
+    : false;
+
+  const BrandIconComp = (() => {
+    switch (branding?.logoIcon) {
+      case 'Store': return Store;
+      case 'Coffee': return Coffee;
+      case 'Utensils': return Utensils;
+      case 'ShoppingBag': return ShoppingBag;
+      case 'Sparkles': return Sparkles;
+      case 'Landmark': return Landmark;
+      default: return CreditCard;
+    }
+  })();
+
   const menuItems: { id: ActiveTab; label: string; icon: React.ElementType; badge?: string }[] = [
     { id: 'dashboard', label: 'Dashboard Utama', icon: LayoutDashboard },
     { id: 'transaksi', label: 'Buku Transaksi', icon: ReceiptText },
@@ -76,33 +103,61 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <div className="flex flex-col h-full bg-[#FCFAF6] dark:bg-[#141A21] border-r border-[#EAE4D8] dark:border-[#242D38] transition-colors duration-200">
       {/* Brand Header */}
       <div className="flex items-center justify-between p-4 border-b border-[#EAE4D8] dark:border-[#242D38]">
-        <div className="flex items-center gap-3 overflow-hidden">
+        <div className="flex items-center gap-3 overflow-hidden flex-1 min-w-0">
           <div
-            className="w-10 h-10 rounded-2xl flex items-center justify-center text-white shadow-md shrink-0 transition-all duration-300"
+            className="w-10 h-10 rounded-2xl flex items-center justify-center text-white shadow-md shrink-0 transition-all duration-300 overflow-hidden"
             style={{
               background: `linear-gradient(135deg, ${primaryColor}, ${accentColor})`,
               boxShadow: `0 8px 16px -4px ${primaryColor}40`,
             }}
           >
-            <CreditCard className="w-5 h-5" />
+            {branding?.logoType === 'custom_url' && branding?.logoUrl ? (
+              <img
+                src={branding.logoUrl}
+                alt={branding.brandName || 'Logo'}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            ) : (
+              <BrandIconComp className="w-5 h-5" />
+            )}
           </div>
           {(!isCollapsed || isOpenMobile) && (
-            <div className="flex flex-col min-w-0">
-              <span className="font-extrabold text-xl tracking-tight text-slate-900 dark:text-white flex items-center gap-1.5">
-                Finora
-                <span
-                  className="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider"
-                  style={{
-                    backgroundColor: secondaryColor,
-                    color: primaryColor,
-                    border: `1px solid ${theme?.colors.borderSoft || '#d1fae5'}`,
-                  }}
-                >
-                  UMKM
+            <div className="flex flex-col min-w-0 flex-1">
+              <div className="flex items-center justify-between gap-1">
+                <span className="font-extrabold text-xl tracking-tight text-slate-900 dark:text-white flex items-center gap-1.5 truncate">
+                  {branding?.brandName || 'Finora'}
+                  {branding?.badgeText && (
+                    <span
+                      className="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider shrink-0"
+                      style={{
+                        backgroundColor: secondaryColor,
+                        color: primaryColor,
+                        border: `1px solid ${theme?.colors.borderSoft || '#d1fae5'}`,
+                      }}
+                    >
+                      {branding.badgeText}
+                    </span>
+                  )}
                 </span>
-              </span>
+
+                {!isCashier && onOpenBrandingModal && (
+                  <button
+                    type="button"
+                    id="sidebar-quick-edit-branding-btn"
+                    onClick={onOpenBrandingModal}
+                    className="p-1 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-[#EAE4D8] dark:hover:bg-slate-800 transition-colors shrink-0"
+                    title="Ubah Logo, Nama Merek & Headline (Khusus Owner)"
+                    aria-label="Edit Identitas Merek"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
               <span className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                Sistem Keuangan Mandiri
+                {branding?.headline || 'Sistem Keuangan Mandiri'}
               </span>
             </div>
           )}
@@ -112,14 +167,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <button
           id="close-sidebar-mobile-btn"
           onClick={() => setIsOpenMobile(false)}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-[#F2ECE2] dark:hover:bg-slate-800 lg:hidden"
+          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-[#F2ECE2] dark:hover:bg-slate-800 lg:hidden shrink-0 ml-1"
           aria-label="Tutup Menu"
         >
           <X className="w-5 h-5" />
         </button>
       </div>
 
-      {/* UMKM Active Store Indicator */}
+      {/* UMKM Active Store Indicator & User Role */}
       {(!isCollapsed || isOpenMobile) && (
         <div className="mx-3 mt-3 p-2.5 rounded-2xl bg-[#F6F2EA] dark:bg-slate-800/60 border border-[#E6DFD2] dark:border-slate-800 flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-xl bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
@@ -127,14 +182,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 truncate">
-              Finora Coffee & Eatery
+              {branding?.storeName || (currentUser?.name ? `${currentUser.name} Coffee` : 'Finora Coffee & Eatery')}
             </p>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
               <span
                 className="w-1.5 h-1.5 rounded-full inline-block animate-pulse"
-                style={{ backgroundColor: primaryColor }}
+                style={{ backgroundColor: isCashier ? '#f59e0b' : primaryColor }}
               ></span>
-              Kasir & Buku Aktif
+              <span className="truncate">
+                {isCashier ? 'Kasir Operasional' : 'Admin / Owner Finora'}
+              </span>
             </p>
           </div>
         </div>
@@ -245,15 +302,43 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         )}
 
-        {/* Kelola Pengguna Button */}
-        {onOpenUserManagementModal && (
+        {/* Kasir Restricted Mode Info Banner */}
+        {isCashier && (!isCollapsed || isOpenMobile) && (
+          <div className="p-2.5 rounded-xl bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/20 text-[11px] text-amber-800 dark:text-amber-300">
+            <p className="font-bold flex items-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-amber-600" />
+              Sesi Kasir Aktif
+            </p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 leading-tight">
+              Manajemen pengguna & fitur Admin disembunyikan otomatis.
+            </p>
+          </div>
+        )}
+
+        {/* Atur Logo & Headline Toko (Khusus Owner/Admin) */}
+        {!isCashier && onOpenBrandingModal && (
+          <button
+            id="sidebar-branding-btn"
+            onClick={onOpenBrandingModal}
+            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-900/60 transition-colors ${
+              isCollapsed && !isOpenMobile ? 'justify-center' : ''
+            }`}
+            title="Ubah Logo, Nama Merek & Headline (Khusus Owner)"
+          >
+            <Sliders className="w-4 h-4 shrink-0 text-emerald-600" />
+            {(!isCollapsed || isOpenMobile) && <span>Atur Logo & Headline</span>}
+          </button>
+        )}
+
+        {/* Manajemen Pengguna Button (Disembunyikan otomatis jika currentUser adalah Kasir) */}
+        {!isCashier && onOpenUserManagementModal && (
           <button
             id="sidebar-user-management-btn"
             onClick={onOpenUserManagementModal}
             className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 border border-indigo-200 dark:border-indigo-900/60 transition-colors ${
               isCollapsed && !isOpenMobile ? 'justify-center' : ''
             }`}
-            title="Kelola Pengguna & Persetujuan Akun Google"
+            title="Manajemen Pengguna & Persetujuan Akun Google"
           >
             <div className="relative">
               <Users className="w-4 h-4 shrink-0 text-indigo-600" />
@@ -263,7 +348,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
             {(!isCollapsed || isOpenMobile) && (
               <div className="flex items-center justify-between w-full">
-                <span>Kelola Pengguna</span>
+                <span>Manajemen Pengguna</span>
                 {pendingRequestsCount && pendingRequestsCount > 0 ? (
                   <span className="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-rose-500 text-white">
                     {pendingRequestsCount}
@@ -274,8 +359,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </button>
         )}
 
-        {/* Admin Reset Button */}
-        {onOpenAdminResetModal && (
+        {/* Admin Reset Button (Disembunyikan otomatis jika currentUser adalah Kasir) */}
+        {!isCashier && onOpenAdminResetModal && (
           <button
             id="sidebar-admin-reset-btn"
             onClick={onOpenAdminResetModal}

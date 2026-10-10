@@ -40,6 +40,7 @@ interface RecentTransactionsTableProps {
   onOpenMonthlyClosingModal?: () => void;
   onOpenAdminResetModal?: () => void;
   closedBooks?: MonthlyClosingRecord[];
+  currentUser?: { email?: string; role?: string; name?: string } | null;
 }
 
 export const RecentTransactionsTable: React.FC<RecentTransactionsTableProps> = ({
@@ -55,7 +56,11 @@ export const RecentTransactionsTable: React.FC<RecentTransactionsTableProps> = (
   onOpenMonthlyClosingModal,
   onOpenAdminResetModal,
   closedBooks = [],
+  currentUser,
 }) => {
+  const isCashier = currentUser?.role
+    ? currentUser.role.toLowerCase().includes('kasir')
+    : false;
   const [searchTerm, setSearchTerm] = useState('');
   const [filterTipe, setFilterTipe] = useState<'semua' | TransactionType>('semua');
   const [filterMetode, setFilterMetode] = useState<string>('semua');
@@ -153,7 +158,7 @@ export const RecentTransactionsTable: React.FC<RecentTransactionsTableProps> = (
 
         {/* Action buttons: Tutup Buku, Reset Admin, Excel, Word, & Tambah */}
         <div className="flex items-center gap-2 flex-wrap">
-          {onOpenMonthlyClosingModal && (
+          {!isCashier && onOpenMonthlyClosingModal && (
             <button
               onClick={onOpenMonthlyClosingModal}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 dark:hover:bg-amber-900/40 text-amber-800 dark:text-amber-200 border border-amber-200 dark:border-amber-800 text-xs font-semibold transition-colors cursor-pointer"
@@ -164,7 +169,7 @@ export const RecentTransactionsTable: React.FC<RecentTransactionsTableProps> = (
             </button>
           )}
 
-          {onOpenAdminResetModal && (
+          {!isCashier && onOpenAdminResetModal && (
             <button
               onClick={onOpenAdminResetModal}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 dark:hover:bg-rose-900/40 text-rose-800 dark:text-rose-200 border border-rose-200 dark:border-rose-800 text-xs font-semibold transition-colors cursor-pointer"

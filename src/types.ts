@@ -157,3 +157,16 @@ export interface ResetAuditLog {
   transaksiDihapusCount: number;
   keterangan: string;
 }
+
+export type LogoIconType = 'CreditCard' | 'Coffee' | 'Store' | 'ShoppingBag' | 'Utensils' | 'Sparkles' | 'Landmark';
+
+export interface StoreBranding {
+  brandName: string;
+  headline: string;
+  storeName: string;
+  storeCategory?: string;
+  logoType: 'icon' | 'custom_url';
+  logoIcon: LogoIconType;
+  logoUrl?: string;
+  badgeText: string;
+}

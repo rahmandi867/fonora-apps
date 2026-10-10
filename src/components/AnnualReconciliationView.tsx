@@ -41,6 +41,7 @@ interface AnnualReconciliationViewProps {
   onExportExcel: () => void;
   onExportWord: () => void;
   theme?: MontessoriTheme;
+  currentUser?: { email?: string; role?: string; name?: string } | null;
 }
 
 export const AnnualReconciliationView: React.FC<AnnualReconciliationViewProps> = ({
@@ -51,7 +52,11 @@ export const AnnualReconciliationView: React.FC<AnnualReconciliationViewProps> =
   onExportExcel,
   onExportWord,
   theme,
+  currentUser,
 }) => {
+  const isCashier = currentUser?.role
+    ? currentUser.role.toLowerCase().includes('kasir')
+    : false;
   const [selectedChartMetric, setSelectedChartMetric] = useState<'semua' | 'laba'>('semua');
   const primaryColor = theme?.colors.primary || '#5E8570';
   const accentColor = theme?.colors.accent || '#D5A259';
@@ -113,14 +118,16 @@ export const AnnualReconciliationView: React.FC<AnnualReconciliationViewProps> =
             <span>Word Resmi</span>
           </button>
 
-          <button
-            onClick={onOpenAnnualClosingModal}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-white text-xs font-bold shadow-xs transition-all active:scale-95 cursor-pointer hover:brightness-105"
-            style={{ backgroundColor: primaryColor }}
-          >
-            <Lock className="w-3.5 h-3.5" />
-            <span>Tutup Tahun & Mulai {annualSummary.tahun + 1}</span>
-          </button>
+          {!isCashier && (
+            <button
+              onClick={onOpenAnnualClosingModal}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-white text-xs font-bold shadow-xs transition-all active:scale-95 cursor-pointer hover:brightness-105"
+              style={{ backgroundColor: primaryColor }}
+            >
+              <Lock className="w-3.5 h-3.5" />
+              <span>Tutup Tahun & Mulai {annualSummary.tahun + 1}</span>
+            </button>
+          )}
         </div>
       </div>
 

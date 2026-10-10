@@ -15,10 +15,11 @@ import {
   Check,
   ChevronDown,
   Sparkles,
-  LogOut,
-  Users
+  LogOut, 
+  Users,
+  Sliders
 } from 'lucide-react';
-import { ActiveTab, PeriodFilter } from '../types';
+import { ActiveTab, PeriodFilter, StoreBranding } from '../types';
 import { MontessoriTheme, MontessoriThemeId, MONTESSORI_THEMES } from '../themes/montessoriThemes';
 
 interface NavbarProps {
@@ -42,6 +43,10 @@ interface NavbarProps {
   onOpenAdminResetModal?: () => void;
   onOpenUserManagementModal?: () => void;
   pendingRequestsCount?: number;
+  currentUser?: { email?: string; role?: string; name?: string } | null;
+  onSwitchUserRole?: (role: 'admin' | 'kasir') => void;
+  branding?: StoreBranding;
+  onOpenBrandingModal?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -65,10 +70,18 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenAdminResetModal,
   onOpenUserManagementModal,
   pendingRequestsCount = 0,
+  currentUser,
+  onSwitchUserRole,
+  branding,
+  onOpenBrandingModal,
 }) => {
+  const isCashier = currentUser?.role
+    ? currentUser.role.toLowerCase().includes('kasir')
+    : false;
   const [showNotifications, setShowNotifications] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showThemeQuickMenu, setShowThemeQuickMenu] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   const primaryColor = theme?.colors.primary || '#059669';
 
@@ -119,7 +132,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           <div>
             <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
-              <span>Finora</span>
+              <span>{branding?.brandName || 'Finora'}</span>
               <span>/</span>
               <span
                 className="capitalize font-semibold"
@@ -468,8 +481,8 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           </div>
 
-          {/* Kelola Pengguna & Persetujuan Akun Google */}
-          {onOpenUserManagementModal && (
+          {/* Kelola Pengguna & Persetujuan Akun Google (Hanya untuk Admin/Owner) */}
+          {!isCashier && onOpenUserManagementModal && (
             <button
               id="navbar-manage-users-btn"
               onClick={onOpenUserManagementModal}
@@ -486,20 +499,156 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           )}
 
-          {/* UMKM Profile Avatar & Logout */}
-          <div className="flex items-center gap-2 pl-1 border-l border-[#EAE4D8] dark:border-[#242D38]">
-            <div
-              className="w-8 h-8 rounded-full text-white font-bold text-xs flex items-center justify-center shadow-inner transition-colors"
-              style={{ backgroundColor: primaryColor }}
+          {/* User Profile Avatar & Role Info with Quick Role Switcher */}
+          <div className="relative flex items-center gap-2 pl-1 border-l border-[#EAE4D8] dark:border-[#242D38]">
+            <button
+              type="button"
+              id="user-profile-menu-toggle-btn"
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              className="flex items-center gap-2 p-1 rounded-xl hover:bg-[#F2ECE2] dark:hover:bg-slate-800 transition-all cursor-pointer text-left"
+              title={`Profil Pengguna: ${currentUser?.name || 'Pak Rahman'} (${currentUser?.role || 'Owner Finora'})`}
             >
-              PR
-            </div>
-            <div className="hidden 2xl:block text-left">
-              <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 leading-none">
-                Pak Rahman
-              </p>
-              <p className="text-[10px] text-slate-400 leading-none mt-1">Owner Finora</p>
-            </div>
+              <div
+                className="w-8 h-8 rounded-full text-white font-bold text-xs flex items-center justify-center shadow-inner transition-colors shrink-0"
+                style={{ backgroundColor: isCashier ? '#f59e0b' : primaryColor }}
+              >
+                {currentUser?.name
+                  ? currentUser.name
+                      .split(' ')
+                      .map((n) => n[0])
+                      .join('')
+                      .slice(0, 2)
+                      .toUpperCase()
+                  : 'PR'}
+              </div>
+              <div className="hidden xl:block text-left min-w-0">
+                <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 leading-none truncate max-w-[110px]">
+                  {currentUser?.name || 'Pak Rahman'}
+                </p>
+                <span
+                  className="inline-block text-[10px] px-1.5 py-0.2 rounded-full font-bold uppercase tracking-wider mt-1"
+                  style={{
+                    backgroundColor: isCashier ? '#fef3c7' : `${primaryColor}20`,
+                    color: isCashier ? '#b45309' : primaryColor,
+                  }}
+                >
+                  {isCashier ? 'Kasir' : 'Admin'}
+                </span>
+              </div>
+              <ChevronDown className="w-3 h-3 text-slate-400 hidden xl:block" />
+            </button>
+
+            {/* User Dropdown Menu with Switch Role Option */}
+            {showUserMenu && (
+              <div
+                id="user-profile-dropdown"
+                className="absolute right-0 top-full mt-2 w-64 rounded-2xl bg-[#FCFAF6] dark:bg-[#161C23] border border-[#E8E2D6] dark:border-[#242D38] shadow-2xl p-3 z-50 text-xs animate-fadeIn"
+              >
+                <div className="pb-2.5 mb-2 border-b border-[#EAE4D8] dark:border-[#242D38]">
+                  <p className="font-bold text-slate-900 dark:text-white truncate">
+                    {currentUser?.name || 'Pengguna'}
+                  </p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                    {currentUser?.email || 'user@finora.id'}
+                  </p>
+                  <div className="mt-1.5">
+                    <span
+                      className="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider inline-block"
+                      style={{
+                        backgroundColor: isCashier ? '#fef3c7' : '#ecfdf5',
+                        color: isCashier ? '#b45309' : '#059669',
+                      }}
+                    >
+                      {currentUser?.role || (isCashier ? 'Kasir Utama' : 'Owner / Admin')}
+                    </span>
+                  </div>
+                </div>
+
+                {onSwitchUserRole && (
+                  <div className="space-y-1 py-1">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-1">
+                      Uji Peran Akun (Role Simulator)
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onSwitchUserRole('admin');
+                        setShowUserMenu(false);
+                      }}
+                      className={`w-full flex items-center justify-between p-2 rounded-xl text-left transition-all ${
+                        !isCashier
+                          ? 'bg-[#F0EBE0] dark:bg-slate-800 font-bold text-emerald-800 dark:text-emerald-300'
+                          : 'hover:bg-[#F6F2E9] dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-300'
+                      }`}
+                    >
+                      <div>
+                        <p className="font-semibold">👑 Mode Admin / Owner</p>
+                        <p className="text-[10px] text-slate-400">Akses penuh semua fitur & pengaturan</p>
+                      </div>
+                      {!isCashier && <Check className="w-3.5 h-3.5 text-emerald-600" />}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onSwitchUserRole('kasir');
+                        setShowUserMenu(false);
+                      }}
+                      className={`w-full flex items-center justify-between p-2 rounded-xl text-left transition-all ${
+                        isCashier
+                          ? 'bg-[#F0EBE0] dark:bg-slate-800 font-bold text-amber-800 dark:text-amber-300'
+                          : 'hover:bg-[#F6F2E9] dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-300'
+                      }`}
+                    >
+                      <div>
+                        <p className="font-semibold">🏷️ Mode Kasir</p>
+                        <p className="text-[10px] text-slate-400">Akses dibatasi: transaksi & produk saja</p>
+                      </div>
+                      {isCashier && <Check className="w-3.5 h-3.5 text-amber-600" />}
+                    </button>
+                  </div>
+                )}
+
+                {!isCashier && onOpenBrandingModal && (
+                  <div className="pt-1 mt-1 border-t border-[#EAE4D8] dark:border-[#242D38]">
+                    <button
+                      type="button"
+                      id="navbar-edit-branding-btn"
+                      onClick={() => {
+                        setShowUserMenu(false);
+                        onOpenBrandingModal();
+                      }}
+                      className="w-full flex items-center gap-2 p-2 rounded-xl text-left hover:bg-[#F6F2E9] dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
+                    >
+                      <Sliders className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <div>
+                        <p className="font-semibold text-xs text-slate-800 dark:text-slate-200">
+                          Atur Logo & Headline Toko
+                        </p>
+                        <p className="text-[10px] text-slate-400">
+                          Ganti nama brand, slogan, dan logo usaha
+                        </p>
+                      </div>
+                    </button>
+                  </div>
+                )}
+
+                <div className="pt-2 mt-1 border-t border-[#EAE4D8] dark:border-[#242D38]">
+                  {onLogout && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowUserMenu(false);
+                        onLogout();
+                      }}
+                      className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 font-semibold transition-colors"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                      <span>Keluar ke Welcome Screen</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
 
             {onLogout && (
               <button
